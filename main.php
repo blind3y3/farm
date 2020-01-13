@@ -1,65 +1,60 @@
 <?php
 
+interface Animals
+{
+    public function getProduct(): int;
+
+    public function animalsCount(): int;
+
+    public function getUniqueData(): array;
+}
+
 class Farm
 {
-    private $cows;
-    private $chickens;
-    private $eggs;
-    private $milk;
-    private $uniqueData;
+    protected $cows;
+    protected $chickens;
+    protected $eggs;
+    protected $milk;
 
-    public function __construct()
+    protected function __construct()
     {
         $this->cows = 10;
         $this->chickens = 20;
     }
 
-    /**
-     * @return array
-     */
-    private function makeUnique(): array
+    protected function getCows(): int
     {
-        for ($i = 0; $i < $this->cows; $i++) {
-            try {
-                $this->uniqueData['cows'][$i] = bin2hex(random_bytes(8));
-            } catch (Exception $e) {
-                echo $e->getMessage();
-            }
-        }
+        return $this->cows;
+    }
 
-        for ($i = 0; $i < $this->chickens; $i++) {
-            try {
-                $this->uniqueData['chickens'][$i] = bin2hex(random_bytes(8));
-            } catch (Exception $e) {
-                echo $e->getMessage();
-            }
-        }
+    protected function getChickens(): int
+    {
+        return $this->chickens;
+    }
+}
 
-        return $this->uniqueData;
+class Cows extends Farm implements Animals
+{
+    private $cowsIds;
+
+    public function __construct($cows = 0)
+    {
+        parent::__construct();
+        return $this->addCows($cows) + parent::getCows();
     }
 
     /**
-     * @return array
+     * @param int $cows
      */
-    private function getUniqueData(): array
-    {
-        return $this->uniqueData;
-    }
-
-    /**
-     * @param $cows
-     * @param $chickens
-     */
-    private function addAnimals($cows, $chickens)
+    private function addCows(int $cows)
     {
         $this->cows += $cows;
-        $this->chickens += $chickens;
     }
 
     /**
      * @return int
      */
-    private function getMilk(): int
+    public function getProduct(): int
     {
         for ($i = 0; $i < $this->cows; $i++) {
             try {
@@ -74,7 +69,50 @@ class Farm
     /**
      * @return int
      */
-    private function getEggs(): int
+    public function animalsCount(): int
+    {
+        return $this->cows;
+    }
+
+    /**
+     * @return array
+     */
+    public function getUniqueData(): array
+    {
+        for ($i = 1; $i <= $this->cows; $i++) { //животных обычно считают с единицы
+            try {
+                $this->cowsIds[$i] = bin2hex(random_bytes(8));
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
+        }
+
+        return $this->cowsIds;
+    }
+}
+
+class Chickens extends Farm implements Animals
+{
+    private $chickensIds;
+
+    public function __construct($chickens = 0)
+    {
+        parent::__construct();
+        return $this->addChickens($chickens) + parent::getChickens();
+    }
+
+    /**
+     * @param int $chickens
+     */
+    private function addChickens(int $chickens)
+    {
+        $this->chickens += $chickens;
+    }
+
+    /**
+     * @return int
+     */
+    public function getProduct(): int
     {
         for ($i = 0; $i < $this->chickens; $i++) {
             try {
@@ -87,26 +125,48 @@ class Farm
     }
 
     /**
-     * @param int $cows
-     * @param int $chickens
-     * @param string $showUniqueData
+     * @return int
      */
-    public function getFullInfo($cows = 0, $chickens = 0, $showUniqueData = 'n')
+    public function animalsCount(): int
     {
-        $this->addAnimals($cows, $chickens);
-        $this->makeUnique();
-        print_r("Коров: {$this->cows}, собрано литров молока: {$this->getMilk()}.\n");
-        print_r("Куриц: {$this->chickens}, собрано яиц: {$this->getEggs()}.");
-        if ($showUniqueData == 'y') {
-            print_r("\nУникальные регистрационные номера животных:\n");
-            print_r($this->getUniqueData());
+        return $this->chickens;
+    }
+
+    /**
+     * @return array
+     */
+    public function getUniqueData(): array
+    {
+        for ($i = 1; $i <= $this->chickens; $i++) {
+            try {
+                $this->chickensIds[$i] = bin2hex(random_bytes(8));
+            } catch (Exception $e) {
+                echo $e->getMessage();
+            }
         }
+        return $this->chickensIds;
     }
 }
 
-print_r("Использование: php main.php cows chickens y/n для добавления коров, куриц и вывода уникальных номеров\n\n");
-$farm = new Farm();
-$farm->getFullInfo(
+
+function getFullInfo($cowsCount, $chickensCount, $showUniqueData = 'n')
+{
+    $cows = new Cows($cowsCount);
+    print_r("Количество коров: {$cows->animalsCount()}. Получено молока: {$cows->getProduct()}.\n");
+
+    $chickens = new Chickens($chickensCount);
+    print_r("Количество куриц: {$chickens->animalsCount()}. Получено яиц: {$chickens->getProduct()}.\n");
+
+    if ($showUniqueData == 'y') {
+        print_r("Уникальные номера коров:\n");
+        print_r($cows->getUniqueData());
+        print_r("Уникальные номера куриц:\n");
+        print_r($chickens->getUniqueData());
+    }
+}
+
+print_r("Использование: php main.php [cows] [chickens] [y/n] для добавления коров, куриц и вывода уникальных номеров\n\n");
+getFullInfo(
     isset($argv[1]) ? $argv[1] : 0,
     isset($argv[2]) ? $argv[2] : 0,
     isset($argv[3]) ? $argv[3] : 'n'
